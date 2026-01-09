@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spot Recognition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./assets/css/index.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo-section">
+                <h1>Spot Recognition</h1>
+            </div>
+            <div class="header-info">
+                <span class="help-text">Create and manage spot recognition entries</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="sr-section">
+        <!-- Form Section -->
+        <aside class="sr-form">
+            <div class="form-header">
+                <h2>📝 Add Recognition Entry</h2>
+                <p class="form-description">Fill in the details to create a new spot recognition entry</p>
+            </div>
+
+            <form id="sr_form">
+                <div class="sr-form-group">
+                    <label for="left_image">
+                        <span class="label-text">Upload Spot Winners Photo</span>
+                        <span class="label-required">*</span>
+                        <span class="label-help">Main recognition image</span>
+                    </label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="left_image" name="leftImage" accept="image/*" />
+                        <div class="file-input-placeholder">
+                            <span class="file-icon">📸</span>
+                            <span class="file-text">Choose left image</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sr-form-group">
+                    <label for="badge_selector">
+                        <span class="label-text">Select Badges</span>
+                        <span class="label-help">Choose one or more recognition badges</span>
+                    </label>
+                    <div class="badge-multiselect" id="badge_selector">
+                        <div class="badge-multiselect-display" onclick="toggleBadgeDropdown()">
+                            <span class="badge-placeholder">Choose badges...</span>
+                            <span class="badge-arrow">▼</span>
+                        </div>
+                        <div class="badge-multiselect-dropdown" id="badge_dropdown">
+                            <div class="badge-option" data-value="brain-wave" data-image="brain-wave.png">
+                                <div class="badge-option-content">
+                                    <img src="./assets/images/brain-wave.png" alt="Brain Wave" class="badge-icon">
+                                    <span class="badge-label">Brain Wave</span>
+                                </div>
+                                <span class="badge-checkbox">☐</span>
+                            </div>
+                            <div class="badge-option" data-value="calmer-of-storms" data-image="calmer-of-storms.png">
+                                <div class="badge-option-content">
+                                    <img src="./assets/images/calmer-of-storms.png" alt="Calmer of Storms"
+                                        class="badge-icon">
+                                    <span class="badge-label">Calmer of Storms</span>
+                                </div>
+                                <span class="badge-checkbox">☐</span>
+                            </div>
+                            <div class="badge-option" data-value="cool-cucumber" data-image="cool-cucumber.png">
+                                <div class="badge-option-content">
+                                    <img src="./assets/images/cool-cucumber.png" alt="Cool Cucumber" class="badge-icon">
+                                    <span class="badge-label">Cool Cucumber</span>
+                                </div>
+                                <span class="badge-checkbox">☐</span>
+                            </div>
+                            <div class="badge-option" data-value="high-five" data-image="high-five.png">
+                                <div class="badge-option-content">
+                                    <img src="./assets/images/high-five.png" alt="High Five" class="badge-icon">
+                                    <span class="badge-label">High Five</span>
+                                </div>
+                                <span class="badge-checkbox">☐</span>
+                            </div>
+                            <div class="badge-option" data-value="multitasking" data-image="multitasking.png">
+                                <div class="badge-option-content">
+                                    <img src="./assets/images/multitasking.png" alt="Multitasking" class="badge-icon">
+                                    <span class="badge-label">Multitasking</span>
+                                </div>
+                                <span class="badge-checkbox">☐</span>
+                            </div>
+                            <div class="badge-option" data-value="out-of-box" data-image="out-of-box.png">
+                                <div class="badge-option-content">
+                                    <img src="./assets/images/out-of-box.png" alt="Out of Box" class="badge-icon">
+                                    <span class="badge-label">Out of Box</span>
+                                </div>
+                                <span class="badge-checkbox">☐</span>
+                            </div>
+                            <div class="badge-option" data-value="rockstar" data-image="rockstar.png">
+                                <div class="badge-option-content">
+                                    <img src="./assets/images/rockstar.png" alt="Rockstar" class="badge-icon">
+                                    <span class="badge-label">Rockstar</span>
+                                </div>
+                                <span class="badge-checkbox">☐</span>
+                            </div>
+                        </div>
+                        <div class="selected-badges" id="selected_badges"></div>
+                    </div>
+                </div>
+
+                <div class="sr-form-group">
+                    <label for="spot_winner_name">
+                        <span class="label-text">Spot Winner Name</span>
+                        <span class="label-required">*</span>
+                    </label>
+                    <input type="text" id="spot_winner_name" name="spotWinnerName" placeholder="Enter winner's name" />
+                </div>
+
+                <div class="sr-form-group">
+                    <label for="spot_description">
+                        <span class="label-text">Recognition Description</span>
+                        <span class="label-required">*</span>
+                    </label>
+                    <textarea id="spot_description" name="description"
+                        placeholder="Describe the achievement or recognition..." rows="3"></textarea>
+                </div>
+
+                <div class="sr-form-group">
+                    <label for="spot_sender_name">
+                        <span class="label-text">Recognition Given By</span>
+                        <span class="label-required">*</span>
+                    </label>
+                    <input type="text" id="spot_sender_name" name="spotSenderName" placeholder="Enter sender's name" />
+                </div>
+
+                <div class="sr-button-group">
+                    <button class="sr-btn secondary" type="reset">
+                        <span class="btn-icon">🔄</span>
+                        Reset
+                    </button>
+                    <button class="sr-btn primary" type="button" onclick="submitForm()">
+                        <span class="btn-icon">✅</span>
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </aside>
+
+        <!-- Table Section -->
+        <section class="sr-result">
+            <div class="table-header">
+                <h2>📋 Recognition Entries</h2>
+                <div class="table-stats">
+                    <span id="entry-count">0 entries</span>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="sr-table">
+                    <thead>
+                        <tr>
+                            <th>Sr No.</th>
+                            <th>Left Image</th>
+                            <th>Winner Name</th>
+                            <th>Description</th>
+                            <th>Given By</th>
+                            <th>Badges</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Generate Section -->
+            <div class="generate-section">
+                <div class="generate-header">
+                    <h3>🎨 Generate Recognition Image</h3>
+                    <p>Select date range and generate a downloadable recognition image</p>
+                </div>
+
+                <div class="date-inputs">
+                    <div class="sr-form-group inline">
+                        <label for="start_date">
+                            <span class="label-text">Start Date</span>
+                            <span class="label-required">*</span>
+                        </label>
+                        <input type="date" id="start_date" name="startDate" />
+                    </div>
+                    <div class="sr-form-group inline">
+                        <label for="end_date">
+                            <span class="label-text">End Date</span>
+                            <span class="label-required">*</span>
+                        </label>
+                        <input type="date" id="end_date" name="endDate" />
+                    </div>
+                </div>
+
+                <button class="sr-btn generate-btn" onclick="generateImage()">
+                    <span class="btn-icon">🎨</span>
+                    Generate Image
+                </button>
+
+                <!-- Progress Bar -->
+                <div id="progress-container" class="progress-container" style="display: none;">
+                    <div class="progress-header">
+                        <span id="progress-text">Generating image...</span>
+                        <span class="progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <!-- Success Message -->
+                <div id="success-message" class="success-message" style="display: none;">
+                    <span class="success-icon">🎉</span>
+                    <span>Image downloaded successfully!</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <section class="email-image-container">
+        <div class="email-image" id="email_image">
+            <div class="wall-of-fame">
+                <div class="wall-of-fame-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 162.14 25.68" height="20">
+                        <defs>
+                            <style>
+                                .cls-1 {
+                                    fill: #fff;
+                                }
+                            </style>
+                        </defs>
+                        <g id="Layer_2" data-name="Layer 2">
+                            <g id="Layer_1-2" data-name="Layer 1">
+                                <rect x="5.21" y="10.35" width="3.3" height="3.3" fill="#00af9a" />
+                                <polygon class="cls-1"
+                                    points="0 3.83 0 10.35 3.32 10.35 3.32 7 10.76 7 10.76 3.83 0 3.83" />
+                                <rect class="cls-1" y="13.65" width="3.33" height="6.53" />
+                                <rect class="cls-1" x="85.18" y="3.83" width="3.08" height="2.88" />
+                                <path class="cls-1"
+                                    d="M26.69,9.33V8.14h-3v12h3.09V14.27a3.67,3.67,0,0,1,.77-2.62,3.46,3.46,0,0,1,3-.75v-3a4,4,0,0,0-3.88,1.42" />
+                                <path class="cls-1"
+                                    d="M37.15,17.66a3.3,3.3,0,0,1-3.09-3.46,3.36,3.36,0,0,1,3.09-3.53,2.85,2.85,0,0,1,2.49,1.52h3.3a5.64,5.64,0,0,0-5.8-4.35A6.16,6.16,0,0,0,30.93,14v.22a6.12,6.12,0,0,0,6,6.29h.26A5.64,5.64,0,0,0,43,16.11H39.67a2.85,2.85,0,0,1-2.52,1.55" />
+                                <path class="cls-1"
+                                    d="M50.18,7.84a6.31,6.31,0,0,0,0,12.62,5.7,5.7,0,0,0,5.7-3.77h-3.4a2.87,2.87,0,0,1-2.32,1.06,3.07,3.07,0,0,1-3-2.39h9.1c.44-4.76-2.5-7.52-6-7.52m-3,5a3.06,3.06,0,0,1,3-2.29,3,3,0,0,1,3,2.29Z" />
+                                <rect class="cls-1" x="85.18" y="8.14" width="3.08" height="12.04" />
+                                <path class="cls-1"
+                                    d="M96.07,7.84A4,4,0,0,0,93,9.31V8.14H90v12H93.1v-7a2.29,2.29,0,0,1,2.17-2.38h.17a2.14,2.14,0,0,1,2.24,2.38v7h3.09v-7c0-3.17-1.87-5.3-4.7-5.3" />
+                                <path class="cls-1"
+                                    d="M105.41,15.13V10.88h2.19V8.13h-2.19V5.39h-3.09v9.72c0,3.29,1.87,5.42,5.4,5.05V17.35c-1.54.09-2.31-.55-2.31-2.22" />
+                                <path class="cls-1"
+                                    d="M16,7.84a6.31,6.31,0,1,0,6.31,6.31h0A6.3,6.3,0,0,0,16,7.84m0,9.78A3.49,3.49,0,1,1,19.36,14v.1A3.43,3.43,0,0,1,16,17.62h0" />
+                                <path class="cls-1"
+                                    d="M77.58,7.84a6.31,6.31,0,1,0,6.31,6.31,6.31,6.31,0,0,0-6.31-6.31m0,9.79A3.48,3.48,0,1,1,81,14.05v.1a3.43,3.43,0,0,1-3.38,3.47" />
+                                <path class="cls-1"
+                                    d="M64.33,7.86a5.11,5.11,0,0,0-3.67,1.52V8.12h-3V24.34h3.11V19a5,5,0,0,0,3.53,1.43c3.15,0,5.72-2.75,5.72-6.31s-2.57-6.27-5.72-6.27m-.45,9.7a3.27,3.27,0,0,1-3.08-3.43,3.26,3.26,0,0,1,3.08-3.4A3.21,3.21,0,0,1,67,14.13a3.24,3.24,0,0,1-3.09,3.43" />
+                            </g>
+                        </g>
+                    </svg>
+                    <div style="text-align: center;">
+                        <h1>Wall of Fame</h1>
+                    </div>
+                    <div id="date_section">
+
+                    </div>
+                </div>
+                <div id="mediaContainer">
+
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="./assets/js/script.js"></script>
+</body>
+
+</html>
