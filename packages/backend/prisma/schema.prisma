@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrgPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Org {
+  id                 String    @id @default(cuid())
+  name               String
+  slug               String    @unique
+  logoUrl            String?
+  fromEmail          String?
+  fromName           String?
+  smtpConfig         Json?
+  plan               OrgPlan   @default(FREE)
+  spotsUsedThisMonth Int       @default(0)
+  planResetAt        DateTime?
+  createdAt          DateTime  @default(now())
+
+  users            User[]
+  spotRecognitions SpotRecognition[]
+  backgrounds      SpotBackground[]
+}
+
+model User {
+  id           String    @id @default(cuid())
+  orgId        String
+  name         String
+  email        String
+  photoUrl     String?
+  passwordHash String?
+  isAdmin      Boolean   @default(false)
+  isAdSync     Boolean   @default(false)
+  googleId     String?
+  microsoftId  String?
+  azureAdId    String?
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  org          Org               @relation(fields: [orgId], references: [id])
+  spotsCreated SpotRecognition[] @relation("CreatedBy")
+  asWinner     SpotWinner[]
+  asSender     SpotSender[]
+
+  @@unique([orgId, email])
+  @@index([orgId])
+}
+
+model SpotRecognition {
+  id              String    @id @default(cuid())
+  orgId           String
+  description     String
+  startDate       DateTime
+  endDate         DateTime
+  backgroundId    String?
+  createdByUserId String
+  imageUrl        String?
+  sentAt          DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime  @default(now())
+
+  org        Org             @relation(fields: [orgId], references: [id])
+  createdBy  User            @relation("CreatedBy", fields: [createdByUserId], references: [id])
+  background SpotBackground? @relation(fields: [backgroundId], references: [id])
+  winners    SpotWinner[]
+  senders    SpotSender[]
+  badges     SpotBadge[]
+
+  @@index([orgId])
+  @@index([orgId, sentAt])
+}
+
+model SpotWinner {
+  id            String  @id @default(cuid())
+  spotId        String
+  userId        String?
+  freeTextName  String?
+  freeTextEmail String?
+
+  spot SpotRecognition @relation(fields: [spotId], references: [id])
+  user User?           @relation(fields: [userId], references: [id])
+}
+
+model SpotSender {
+  id            String  @id @default(cuid())
+  spotId        String
+  userId        String?
+  freeTextName  String?
+  freeTextEmail String?
+
+  spot SpotRecognition @relation(fields: [spotId], references: [id])
+  user User?           @relation(fields: [userId], references: [id])
+}
+
+model SpotBadge {
+  id         String @id @default(cuid())
+  spotId     String
+  badgeValue String
+
+  spot SpotRecognition @relation(fields: [spotId], references: [id])
+}
+
+model SpotBackground {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  imageUrl  String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  org   Org               @relation(fields: [orgId], references: [id])
+  spots SpotRecognition[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+}
