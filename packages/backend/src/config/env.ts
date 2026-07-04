@@ -16,16 +16,16 @@ const envSchema = z.object({
   PLATFORM_FROM_EMAIL: z.string().default('noreply@spotrecognition.app'),
   PLATFORM_FROM_NAME: z.string().default('Spot Recognition'),
 
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().transform(v => v || undefined).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().transform(v => v || undefined).optional(),
   GOOGLE_CALLBACK_URL: z.string().default('http://localhost:3001/api/auth/google/callback'),
 
-  MICROSOFT_CLIENT_ID: z.string().optional(),
-  MICROSOFT_CLIENT_SECRET: z.string().optional(),
+  MICROSOFT_CLIENT_ID: z.string().transform(v => v || undefined).optional(),
+  MICROSOFT_CLIENT_SECRET: z.string().transform(v => v || undefined).optional(),
   MICROSOFT_TENANT_ID: z.string().default('common'),
   MICROSOFT_CALLBACK_URL: z.string().default('http://localhost:3001/api/auth/microsoft/callback'),
 
-  ENCRYPTION_KEY: z.string().length(32).optional(),
+  ENCRYPTION_KEY: z.string().transform(v => v || undefined).pipe(z.string().length(32).optional()),
 })
 
 const parsed = envSchema.safeParse(process.env)

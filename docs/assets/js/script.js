@@ -95,15 +95,15 @@ class FormManager {
     }
 
     initializeForm() {
-        const originalReset = this.form.reset.bind(this.form);
-        this.form.reset = () => {
-            originalReset();
+        // 'reset' fires for both form.reset() calls and the native Reset button
+        this.form.addEventListener('reset', () => {
             this.clearEditIndicator();
             this.dataManager.clearEditMode();
             this.clearValidationErrors();
             this.resetFileInputPlaceholders();
+            photoCropper.reset();
             badgeMultiSelect.reset();
-        };
+        });
         this.submitButton = this.form.querySelector('button[type="button"]');
         this.originalSubmitText = this.submitButton.textContent;
     }
@@ -143,6 +143,14 @@ class FormManager {
 
             fileInput.addEventListener('change', () => {
                 this.updateFileInputPlaceholder(fileInput, placeholder);
+                if (fileInput.name === 'leftImage') {
+                    const file = fileInput.files && fileInput.files[0];
+                    if (file && this.validateFileInput(fileInput)) {
+                        photoCropper.openWithFile(file);
+                    } else {
+                        photoCropper.reset();
+                    }
+                }
             });
         });
     }
@@ -225,21 +233,21 @@ class FormManager {
             if (!this.validateForm()) { this.setSubmitLoading(false); return; }
 
             const formData = new FormData(this.form);
-            const leftImageFile = formData.get('leftImage');
             const selectedBadges = badgeMultiSelect.getSelectedBadges();
+
+            // Cropper holds the selected photo (cropped if the user applied an adjustment)
+            const selectedPhoto = photoCropper.hasPhoto() ? photoCropper.getPhotoDataURL() : null;
 
             let leftImageBase64;
             if (this.dataManager.isEditMode()) {
-                leftImageBase64 = (leftImageFile && leftImageFile.size > 0)
-                    ? await this.readFileAsDataURL(leftImageFile)
-                    : this.dataManager.editingData.leftImage;
+                leftImageBase64 = selectedPhoto || this.dataManager.editingData.leftImage;
             } else {
-                if (!leftImageFile || leftImageFile.size === 0) {
+                if (!selectedPhoto) {
                     this.notificationManager.error('Please select a winner photo');
                     this.setSubmitLoading(false);
                     return;
                 }
-                leftImageBase64 = await this.readFileAsDataURL(leftImageFile);
+                leftImageBase64 = selectedPhoto;
             }
 
             if (selectedBadges.length === 0) {
@@ -442,8 +450,20 @@ class ImageGenerator {
             this.notificationManager.warning('Please select both start and end dates');
             return;
         }
-        if (new Date(startDate) > new Date(endDate)) {
-            this.notificationManager.error('Start date cannot be after end date');
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (start > today) {
+            this.notificationManager.error('From date cannot be in the future');
+            return;
+        }
+        if (end > today) {
+            this.notificationManager.error('To date cannot be in the future');
+            return;
+        }
+        if (start > end) {
+            this.notificationManager.error('From date cannot be after To date');
             return;
         }
         if (this.dataManager.getAllEntries().length === 0) {
@@ -636,6 +656,118 @@ class ModalManager {
     }
 }
 
+// Photo Crop / Adjust
+class PhotoCropManager {
+    constructor() {
+        this.cropper = null;
+        this.originalDataURL = null;   // untouched source, so re-adjusting never compounds crops
+        this.originalFileName = '';
+        this.croppedDataURL = null;    // null = use original as-is
+        this.overlay = document.getElementById('crop-modal');
+        this.image = document.getElementById('crop_image');
+        this.adjustButton = document.getElementById('adjust_photo_btn');
+
+        this.overlay.addEventListener('click', e => {
+            if (e.target === this.overlay) this.cancel();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && this.overlay.classList.contains('open')) this.cancel();
+        });
+    }
+
+    async openWithFile(file) {
+        this.originalDataURL = await this.readFileAsDataURL(file);
+        this.originalFileName = file.name;
+        this.croppedDataURL = null;
+        this.adjustButton.hidden = false;
+        this.open();
+    }
+
+    reopen() {
+        if (this.originalDataURL) this.open();
+    }
+
+    open() {
+        this.image.src = this.originalDataURL;
+        this.overlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+        this.destroyCropper();
+        this.cropper = new Cropper(this.image, {
+            viewMode: 1,
+            autoCropArea: 1,
+            background: false,
+            responsive: true
+        });
+        this.setAspect(NaN, this.overlay.querySelector('[data-aspect="free"]'));
+    }
+
+    setAspect(ratio, button) {
+        if (!this.cropper) return;
+        this.cropper.setAspectRatio(ratio);
+        this.overlay.querySelectorAll('#crop_aspect_group .crop-tool-btn').forEach(btn => {
+            btn.classList.toggle('active', btn === button);
+        });
+    }
+
+    zoom(delta) { if (this.cropper) this.cropper.zoom(delta); }
+    rotate(degrees) { if (this.cropper) this.cropper.rotate(degrees); }
+    resetCrop() { if (this.cropper) this.cropper.reset(); }
+
+    apply() {
+        if (!this.cropper) return;
+        const canvas = this.cropper.getCroppedCanvas({
+            maxWidth: 1600,
+            maxHeight: 1600,
+            fillColor: '#fff',
+            imageSmoothingQuality: 'high'
+        });
+        this.croppedDataURL = canvas.toDataURL('image/jpeg', 0.92);
+        this.updateFileText(`${this.originalFileName} (adjusted)`);
+        this.close();
+    }
+
+    // Closing without applying keeps whatever was last applied (or the original)
+    cancel() { this.close(); }
+
+    close() {
+        this.overlay.classList.remove('open');
+        document.body.style.overflow = '';
+        this.destroyCropper();
+    }
+
+    destroyCropper() {
+        if (this.cropper) {
+            this.cropper.destroy();
+            this.cropper = null;
+        }
+    }
+
+    hasPhoto() { return !!this.originalDataURL; }
+    getPhotoDataURL() { return this.croppedDataURL || this.originalDataURL; }
+
+    updateFileText(text) {
+        const wrapper = document.getElementById('left_image').closest('.file-input-wrapper');
+        wrapper.querySelector('.file-text').textContent = text;
+    }
+
+    reset() {
+        this.close();
+        this.originalDataURL = null;
+        this.originalFileName = '';
+        this.croppedDataURL = null;
+        this.adjustButton.hidden = true;
+    }
+
+    readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = e => resolve(e.target.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
 // Badge Multi-Select
 class BadgeMultiSelectManager {
     constructor() {
@@ -769,6 +901,7 @@ class BadgeMultiSelectManager {
 const notificationManager = new NotificationManager();
 const dataManager = new SpotRecognitionData();
 const badgeMultiSelect = new BadgeMultiSelectManager();
+const photoCropper = new PhotoCropManager();
 const formManager = new FormManager(dataManager, notificationManager);
 const tableManager = new TableManager(dataManager, notificationManager);
 const imageGenerator = new ImageGenerator(dataManager, notificationManager);
@@ -819,6 +952,12 @@ function showImageModal(imageSrc, caption) { modalManager.showModal(imageSrc, ca
 
 function toggleBadgeDropdown() { badgeMultiSelect.toggleDropdown(); }
 
+function reopenCrop() { photoCropper.reopen(); }
+
+function cancelCrop() { photoCropper.cancel(); }
+
+function applyCrop() { photoCropper.apply(); }
+
 function closePreviewModal() { modalManager.hideWallOfFamePreview(); }
 
 function downloadPreviewImage() {
@@ -830,4 +969,18 @@ function downloadPreviewImage() {
 
 document.addEventListener('DOMContentLoaded', () => {
     tableManager.updateTable();
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const startInput = document.getElementById('start_date');
+    const endInput = document.getElementById('end_date');
+
+    startInput.max = todayStr;
+    endInput.max = todayStr;
+
+    startInput.addEventListener('change', () => {
+        endInput.min = startInput.value || '';
+        if (endInput.value && endInput.value < startInput.value) {
+            endInput.value = startInput.value;
+        }
+    });
 });
