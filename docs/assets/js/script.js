@@ -970,12 +970,8 @@ function downloadPreviewImage() {
 document.addEventListener('DOMContentLoaded', () => {
     tableManager.updateTable();
 
-    const todayStr = new Date().toISOString().split('T')[0];
     const startInput = document.getElementById('start_date');
     const endInput = document.getElementById('end_date');
-
-    startInput.max = todayStr;
-    endInput.max = todayStr;
 
     startInput.addEventListener('change', () => {
         endInput.min = startInput.value || '';
