@@ -450,18 +450,8 @@ class ImageGenerator {
             this.notificationManager.warning('Please select both start and end dates');
             return;
         }
-        const today = new Date();
-        today.setHours(23, 59, 59, 999);
         const start = new Date(startDate);
         const end = new Date(endDate);
-        if (start > today) {
-            this.notificationManager.error('From date cannot be in the future');
-            return;
-        }
-        if (end > today) {
-            this.notificationManager.error('To date cannot be in the future');
-            return;
-        }
         if (start > end) {
             this.notificationManager.error('From date cannot be after To date');
             return;
